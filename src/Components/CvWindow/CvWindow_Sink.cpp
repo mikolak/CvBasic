@@ -9,10 +9,12 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include <ctime>
 
 #include "CvWindow_Sink.hpp"
 #include "Logger.hpp"
 #include "Types/Drawable.hpp"
+#include "Types/DrawableContainer.hpp"
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
@@ -68,9 +70,11 @@ void CvWindow_Sink::prepareInterface() {
 				(Base::DataStreamInterface*) (in_img[i]));
 		addDependency(std::string("onNewImage") + id, stream);
 
-		in_draw.push_back(new Base::DataStreamInPtr<Types::Drawable,
-				Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex>);
+		in_draw.push_back(new Base::DataStreamInPtr<Types::Drawable>);
 		registerStream(std::string("in_draw") + id, in_draw[i]);
+
+		out_point.push_back(new Base::DataStreamOut<cv::Point>);
+		registerStream(std::string("out_point") + id, out_point[i]);
 
 		// save handlers
 		hand = new Base::EventHandler2;
@@ -145,17 +149,20 @@ void CvWindow_Sink::onNewImageN(int n) {
 			img[n] = in_img[n]->read().clone();
 		}
 
-		if (!in_draw[n]->empty()) {
-			to_draw[n] = in_draw[n]->read();
+		Types::DrawableContainer ctr;
+		while (!in_draw[n]->empty()) {
+			ctr.add(in_draw[n]->read()->clone());
+			to_draw[n] = boost::shared_ptr<Types::Drawable>(ctr.clone());
 		}
 
 		if (to_draw[n]) {
 			to_draw[n]->draw(img[n], CV_RGB(255,0,255));
-			to_draw[n] = boost::shared_ptr<Types::Drawable>();
+			// TODO: dodać wygaszanie starszych drawable, np. przez 10 odświeżeń
+			//to_draw[n] = boost::shared_ptr<Types::Drawable>();
 		}
 
 		// Display image.
-		onStep();
+		//onStep();
 	} catch (std::exception &ex) {
 		CLOG(LERROR) << "CvWindow::onNewImage failed: " << ex.what() << "\n";
 	}
@@ -203,9 +210,13 @@ void CvWindow_Sink::onSaveImageN(int n) {
 	CLOG(LTRACE) << name() << "::onSaveImageN(" << n << ")";
 
 	try {
+		// Change compression to lowest.
+	        vector<int> param;
+	        param.push_back(CV_IMWRITE_PNG_COMPRESSION);
+	        param.push_back(0); // MAX_MEM_LEVEL = 9 
 		// Save image.
 		std::string tmp_name = std::string(dir) + std::string("/") + std::string(filename) + std::string(".png");
-		imwrite(tmp_name, img[n]);
+		imwrite(tmp_name, img[n], param);
 		CLOG(LINFO) << "Window " << name() << " saved to file " << tmp_name <<std::endl;
 
 	} catch (std::exception &ex) {
@@ -216,6 +227,20 @@ void CvWindow_Sink::onSaveImageN(int n) {
 void CvWindow_Sink::onSaveAllImages() {
 	CLOG(LTRACE) << name() << "::onSaveAllImages";
 
+	std::time_t rawtime;
+	std::tm* timeinfo;
+	char buffer [80];
+
+	std::time(&rawtime);
+	timeinfo = std::localtime(&rawtime);
+
+	std::strftime(buffer,80,"%Y-%m-%d-%H-%M-%S",timeinfo);
+
+	// Change compression to lowest.
+        vector<int> param;
+	param.push_back(CV_IMWRITE_PNG_COMPRESSION);
+	param.push_back(0); // MAX_MEM_LEVEL = 9 
+
 	try {
 		for (int i = 0; i < count; ++i) {
 			char id = '0' + i;
@@ -224,8 +249,8 @@ void CvWindow_Sink::onSaveAllImages() {
 				LOG(LWARNING) << name() << ": image " << i << " empty";
 			} else {
 				// Save image.
-				std::string tmp_name = std::string(dir) + std::string("/") + std::string(filename) + id + std::string(".png");
-				imwrite(tmp_name, img[i]);
+				std::string tmp_name = std::string(dir) + std::string("/") + std::string(filename) + id + "_" + buffer + std::string(".png");
+				imwrite(tmp_name, img[i], param);
 				CLOG(LINFO) << "Window " << name() << " saved to file " << tmp_name <<std::endl;
 			}
 		}

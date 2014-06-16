@@ -1,11 +1,12 @@
 /*!
  * \file
  * \brief 
- * \author Tomek Kornuta,,,
+ * \author Jan Figat,
+ * \e-mail jan.figat@gmail.com
  */
 
-#ifndef CVSIFT_HPP_
-#define CVSIFT_HPP_
+#ifndef CvBRIEF_HPP_
+#define CvBRIEF_HPP_
 
 #include "Component_Aux.hpp"
 #include "Component.hpp"
@@ -14,37 +15,32 @@
 #include "Types/Features.hpp"
 
 #include <opencv2/opencv.hpp>
-
-#if (CV_MAJOR_VERSION == 2)
-#if (CV_MINOR_VERSION > 3)
-#include <opencv2/nonfree/features2d.hpp>
-#endif
-#endif
-
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/features2d/features2d.hpp"
 
 
 namespace Processors {
-namespace CvSIFT {
+namespace CvBRIEF {
 
 using namespace cv;
 
 /*!
- * \class CvSIFT
- * \brief CvSIFT processor class.
+ * \class CvBRIEF
+ * \brief CvBRIEF processor class.
  *
- * CvSIFT processor.
+ * CvBRIEF processor.
  */
-class CvSIFT: public Base::Component {
+class CvBRIEF: public Base::Component {
 public:
 	/*!
 	 * Constructor.
 	 */
-	CvSIFT(const std::string & name = "CvSIFT");
+	CvBRIEF(const std::string & name = "CvBRIEF");
 
 	/*!
 	 * Destructor
 	 */
-	virtual ~CvSIFT();
+	virtual ~CvBRIEF();
 
 	/*!
 	 * Prepare components interface (register streams and handlers).
@@ -81,10 +77,10 @@ protected:
 	void onNewImage();
 
 	/// Event handler.
-	Base::EventHandler <CvSIFT> h_onNewImage;
+	Base::EventHandler <CvBRIEF> h_onNewImage;
 
 	/// Input data stream
-	Base::DataStreamIn <Mat> in_img;
+	Base::DataStreamIn <cv::Mat> in_img;
 
 	/// Output data stream containing extracted features
 	Base::DataStreamOut <Types::Features> out_features;
@@ -92,14 +88,16 @@ protected:
 	/// Output data stream containing feature descriptors
 	Base::DataStreamOut <cv::Mat> out_descriptors;
 
+
+
 };
 
-} //: namespace CvSIFT
+} //: namespace CvBRIEF
 } //: namespace Processors
 
 /*
  * Register processor component.
  */
-REGISTER_COMPONENT("CvSIFT", Processors::CvSIFT::CvSIFT)
+REGISTER_COMPONENT("CvBRIEF", Processors::CvBRIEF::CvBRIEF)
 
-#endif /* CVSIFT_HPP_ */
+#endif /* CvBRIEF_HPP_ */

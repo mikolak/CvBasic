@@ -1,5 +1,5 @@
 # Add all components here using ADD_COMPONENT(<COMPONENT_DIRECTORY>)
-ADD_COMPONENT(CvHoughCircles)
+#ADD_COMPONENT(CvHoughCircles)
 
 ADD_COMPONENT(CvAdaptiveThreshold)
 
@@ -58,3 +58,27 @@ ADD_COMPONENT(CvMoments)
 ADD_COMPONENT(Skeletonization)
 
 ADD_COMPONENT(CvBayesClassifier)
+
+ADD_COMPONENT(ViewSequence)
+
+ADD_COMPONENT(CvHoughLines)
+
+ADD_COMPONENT(CvHoughCircles)
+
+ADD_COMPONENT(CvORB)
+
+ADD_COMPONENT(CvBRISK)
+
+ADD_COMPONENT(CvMSER)
+
+ADD_COMPONENT(CvFreak)
+
+ADD_COMPONENT(CvBRIEF)
+
+ADD_COMPONENT(CvFAST)
+
+ADD_COMPONENT(CvStarDetector)
+
+ADD_COMPONENT(CvBruteForce)
+
+ADD_COMPONENT(Trigger)
