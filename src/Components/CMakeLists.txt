@@ -1,9 +1,13 @@
 # Add all components here using ADD_COMPONENT(<COMPONENT_DIRECTORY>)
-#ADD_COMPONENT(CvHoughCircles)
+ADD_COMPONENT(CvHoughCircles)
+
+ADD_COMPONENT(CvHoughLines)
 
 ADD_COMPONENT(CvAdaptiveThreshold)
 
 ADD_COMPONENT(CvFindChessboardCorners)
+
+ADD_COMPONENT(CvFindCirclesGrid)
  
 ADD_COMPONENT(CvThreshold)
 
@@ -45,12 +49,6 @@ ADD_COMPONENT(CvCanny)
 
 ADD_COMPONENT(CvHarris)
 
-ADD_COMPONENT(CvSIFT)
-
-ADD_COMPONENT(CvFlann)
-
-ADD_COMPONENT(CvSURF)
-
 ADD_COMPONENT(CvContour)
 
 ADD_COMPONENT(CvMoments)
@@ -59,11 +57,11 @@ ADD_COMPONENT(Skeletonization)
 
 ADD_COMPONENT(CvBayesClassifier)
 
-ADD_COMPONENT(ViewSequence)
+ADD_COMPONENT(CvSIFT)
 
-ADD_COMPONENT(CvHoughLines)
+ADD_COMPONENT(CvFlann)
 
-ADD_COMPONENT(CvHoughCircles)
+ADD_COMPONENT(CvSURF)
 
 ADD_COMPONENT(CvORB)
 
@@ -81,4 +79,12 @@ ADD_COMPONENT(CvStarDetector)
 
 ADD_COMPONENT(CvBruteForce)
 
+ADD_COMPONENT(CalcStatistics)
+
+ADD_COMPONENT(CalcObjectLocation)
+
 ADD_COMPONENT(Trigger)
+
+ADD_COMPONENT(DrawCoordinateSystem)
+
+ADD_COMPONENT(HomogenousMatrixProvider)

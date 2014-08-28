@@ -19,6 +19,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 
+#include "Property.hpp"
+
 /**
  * \defgroup CvSolvePnP CvSolvePnP
  * \ingroup Processors
@@ -117,9 +119,19 @@ private:
 
 	void onNewObject3D();
 
+	Base::Property<double> prop_x;
+	Base::Property<double> prop_y;
+	Base::Property<double> prop_z;
+	Base::Property<double> prop_roll;
+	Base::Property<double> prop_pitch;
+	Base::Property<double> prop_yaw;
+
+
 	Base::DataStreamInPtr <Types::Objects3D::Object3D> in_object3d;
 	Base::DataStreamIn <Types::CameraInfo> in_camerainfo;
 	Base::DataStreamOut <Types::HomogMatrix> out_homogMatrix;
+	Base::DataStreamOut <cv::Mat> out_rvec;
+	Base::DataStreamOut <cv::Mat> out_tvec;
 
 	Base::EventHandler <CvSolvePnP_Processor> h_onNewObject3D;
 };

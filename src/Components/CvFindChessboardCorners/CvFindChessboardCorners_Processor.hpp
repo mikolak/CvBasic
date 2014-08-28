@@ -19,7 +19,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-
 /**
  * \defgroup CvFindChessboardCorners CvFindChessboardCorners
  * \ingroup Processors
@@ -66,58 +65,15 @@
  * @}
  */
 
-
 namespace Processors {
 namespace CvFindChessboardCorners {
 
 using namespace cv;
 
-
 #define ELEMS BOOST_PP_TUPLE_TO_LIST(5, (NEAREST, LINEAR, AREA, CUBIC, LANCZOS4))
 GENERATE_ENUM_TRANSLATOR(InterpolationTranslator, int, ELEMS, INTER_);
 
-/*
-
-class InterpolationTranslator {
-public:
-	static int fromStr(const std::string & s)
-	{
-		if (s == "NEAREST")
-			return INTER_NEAREST;
-		else if (s == "LINEAR")
-			return INTER_LINEAR;
-		else if (s == "AREA")
-			return INTER_AREA;
-		else if (s == "CUBIC")
-			return INTER_CUBIC;
-		else if (s == "LANCZOS4")
-			return INTER_LANCZOS4;
-		else
-			return INTER_NEAREST;
-	}
-
-	static std::string toStr(int t)
-	{
-		switch (t)
-		{
-			case INTER_NEAREST:
-				return "NEAREST";
-			case INTER_LINEAR:
-				return "LINEAR";
-			case INTER_AREA:
-				return "AREA";
-			case INTER_CUBIC:
-				return "CUBIC";
-			case INTER_LANCZOS4:
-				return "LANCZOS4";
-			default:
-				return "NEAREST";
-		}
-	}
-};*/
-
-class CvFindChessboardCorners_Processor: public Base::Component
-{
+class CvFindChessboardCorners_Processor: public Base::Component {
 public:
 	CvFindChessboardCorners_Processor(const std::string & name = "");
 	virtual ~CvFindChessboardCorners_Processor();
@@ -126,7 +82,6 @@ public:
 	 * Prepares communication interface.
 	 */
 	virtual void prepareInterface();
-
 
 protected:
 	/*!
@@ -159,19 +114,18 @@ protected:
 	 */
 	virtual bool onStep();
 
-
 private:
 	void onNewImage();
 
 	void initChessboard();
 
 	/** New image event handler. */
-	Base::EventHandler <CvFindChessboardCorners_Processor> h_onNewImage;
+	Base::EventHandler<CvFindChessboardCorners_Processor> h_onNewImage;
 	/** Image stream. */
-	Base::DataStreamIn <cv::Mat> in_img;
+	Base::DataStreamIn<cv::Mat> in_img;
 	/** Chessboard stream. */
-	Base::DataStreamOut <Types::Objects3D::Chessboard> out_chessboard;
-	Base::DataStreamOut <Types::ImagePosition> out_imagePosition;
+	Base::DataStreamOut<Types::Objects3D::Chessboard> out_chessboard;
+	Base::DataStreamOut<Types::ImagePosition> out_imagePosition;
 
 	/** Located corners.*/
 	std::vector<cv::Point2f> corners;
@@ -200,7 +154,7 @@ private:
 
 	Base::Property<int, InterpolationTranslator> prop_interpolation_type;
 
-	// TODO: add unit types: found and not found
+// TODO: add unit types: found and not found
 
 	void sizeCallback(int old_value, int new_value);
 	void flagsCallback(bool old_value, bool new_value);

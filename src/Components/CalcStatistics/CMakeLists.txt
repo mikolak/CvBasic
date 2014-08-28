@@ -8,9 +8,9 @@ FILE(GLOB files *.cpp)
 
 
 # Create an executable file from sources:
-ADD_LIBRARY(ViewSequence SHARED ${files})
+ADD_LIBRARY(CalcStatistics SHARED ${files})
 
 # Link external libraries
-TARGET_LINK_LIBRARIES(ViewSequence ${DisCODe_LIBRARIES} )
+TARGET_LINK_LIBRARIES(CalcStatistics ${OpenCV_LIBS} ${DisCODe_LIBRARIES} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} )
 
-INSTALL_COMPONENT(ViewSequence)
+INSTALL_COMPONENT(CalcStatistics)

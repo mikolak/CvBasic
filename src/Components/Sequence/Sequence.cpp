@@ -18,28 +18,28 @@ namespace Sequence {
 Sequence::Sequence(const std::string & n) :
 	Base::Component(n),
 	prop_directory("sequence.directory", std::string(".")),
-	prop_pattern("sequence.pattern", std::string(".*\\.(jpg|png|bmp)")),
+	prop_pattern("sequence.pattern", std::string(".*\\.(jpg|png|bmp|yaml|yml)")),
 	prop_sort("mode.sort", true),
 	//prop_prefetch("mode.prefetch", false),
-	prop_triggered("mode.triggered", false),
-	prop_iterate("mode.iterate", true),
-	prop_loop("mode.loop", false)
+	prop_loop("mode.loop", false),
+	prop_auto_trigger("mode.auto_trigger", true)
 {
 	registerProperty(prop_directory);
 	registerProperty(prop_pattern);
 	registerProperty(prop_sort);
-	//registerProperty(prop_prefetch);
-	registerProperty(prop_triggered);
-	registerProperty(prop_iterate);
 	registerProperty(prop_loop);
+	registerProperty(prop_auto_trigger);
+	//registerProperty(prop_prefetch);
 
 	// Set first frame index number.
-	if (prop_iterate)
+	if (prop_auto_trigger)
 		frame = -1;
 	else
 		frame = 0;
 
-	trig = true;
+	// Initialize flags
+	next_image_flag = false;
+	reload_flag = false;
 
 	CLOG(LTRACE) << name() << ": constructed";
 }
@@ -52,42 +52,30 @@ Sequence::~Sequence() {
 void Sequence::prepareInterface() {
     // Register streams.
     registerStream("out_img", &out_img);
-    registerStream("in_load_next_image_trigger", &in_load_next_image_trigger);
+    registerStream("in_trigger", &in_trigger);
 
     // Register handlers - loads image, NULL dependency.
-	h_onLoadImage.setup(this, &Sequence::onLoadImage);
-	registerHandler("onLoadImage", &h_onLoadImage);
+	registerHandler("onLoadImage", boost::bind(&Sequence::onLoadImage, this));
     addDependency("onLoadImage", NULL);
 
     // Register handlers - next image, can be triggered manually (from GUI) or by new data present in_load_next_image_trigger dataport.
     // 1st version - manually.
-    h_onLoadNextImage.setup(this, &Sequence::onLoadNextImage);
-    registerHandler("Next image", &h_onLoadNextImage);
+    registerHandler("Next image", boost::bind(&Sequence::onLoadNextImage, this));
 
-    // 2nd version - external tritter.
-    h_onTriggeredLoadNextImage.setup(this, &Sequence::onTriggeredLoadNextImage);
-    registerHandler("onTriggeredLoadNextImage", &h_onTriggeredLoadNextImage);
-    addDependency("onTriggeredLoadNextImage", &in_load_next_image_trigger);
-
+    // 2nd version - external trigger.
+    registerHandler("onTriggeredLoadNextImage", boost::bind(&Sequence::onTriggeredLoadNextImage, this));
+    addDependency("onTriggeredLoadNextImage", &in_trigger);
 
     // Register handlers - reloads sequence, triggered manually.
-    h_onSequenceReload.setup(this, &Sequence::onSequenceReload);
-    registerHandler("Reload sequence", &h_onSequenceReload);
-
-    // Register handlers - trigger (load frame), triggered manually.
-    h_onRefreshImage.setup(this, &Sequence::onRefreshImage);
-    registerHandler("Refresh image", &h_onRefreshImage);
+    registerHandler("Reload sequence", boost::bind(&Sequence::onSequenceReload, this));
 
 }
 
 bool Sequence::onInit() {
 	CLOG(LTRACE) << "Sequence::initialize\n";
 
-	if (!findFiles()) {
-		CLOG(LERROR) << name() << ": There are no files matching regex "
-				<< prop_pattern << " in " << prop_directory;
-		return false;
-	}
+	// Load files on first
+	reload_flag = true;
 
 	return true;
 }
@@ -101,17 +89,30 @@ bool Sequence::onFinish() {
 void Sequence::onLoadImage() {
 	CLOG(LDEBUG) << "Sequence::onLoadImage";
 
-	// Check triggering mode.
-	if (prop_triggered && !trig)
-		return;
-	trig = false;
-	// Check iterate mode.
-	if (prop_iterate)
-		frame++;
+	if(reload_flag) {
+		// Try to reload sequence.
+		if (!findFiles()) {
+			CLOG(LERROR) << name() << ": There are no files matching the regular expression "
+					<< prop_pattern << " in " << prop_directory;
+		}
+		frame = -1;
+		reload_flag = false;
+	}
 
+
+	// Check whether there are any images loaded.
+	if(files.empty())
+		return;
+
+	// Check triggering mode.
+	if ((prop_auto_trigger) || (!prop_auto_trigger && next_image_flag))
+		frame++;
+	// Anyway, reset flag.
+	next_image_flag = false;
+
+	// Check frame number.
 	if (frame <0)
 		frame = 0;
-
 	// Check the size of the dataset.
 	if (frame >= files.size()) {
 		if (prop_loop) {
@@ -128,7 +129,16 @@ void Sequence::onLoadImage() {
 
 	CLOG(LTRACE) << "Sequence: reading image " << files[frame];
 	try {
-		img = cv::imread(files[frame], CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);
+		// Get file extension.
+		std::string ext = files[frame].substr(files[frame].rfind(".")+1);
+		CLOG(LDEBUG) << "Extracted file Extension " << ext;
+		// Read depth from yaml.
+		if ((ext == "yaml") || (ext == "yml")){
+			cv::FileStorage file(files[frame], cv::FileStorage::READ);
+			file["img"] >> img;
+		}
+		else
+			img = cv::imread(files[frame], CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);
 	} catch (...) {
 		CLOG(LWARNING) << name() << ": image reading failed! ["
 				<< files[frame] << "]";
@@ -139,43 +149,24 @@ void Sequence::onLoadImage() {
 }
 
 
-void Sequence::onRefreshImage(){
-    CLOG(LDEBUG) << "Sequence::onRefreshImage - trigger";
-    trig = true;
-}
-
-
 void Sequence::onTriggeredLoadNextImage(){
     CLOG(LDEBUG) << "Sequence::onTriggeredLoadNextImage - next image from the sequence will be loaded";
-    in_load_next_image_trigger.read();
-    frame++;
+    in_trigger.read();
+	next_image_flag = true;
 }
 
 
 void Sequence::onLoadNextImage(){
 	CLOG(LDEBUG) << "Sequence::onLoadNextImage - next image from the sequence will be loaded";
-	frame++;
+	next_image_flag = true;
 }
 
 
 void Sequence::onSequenceReload() {
-	// Set first frame index number.
-	if (prop_iterate)
-		frame = -1;
-	else
-		frame = 0;
-	// Try to load new sequence.
-	if (!findFiles()) {
-		CLOG(LERROR) << name() << ": There are no files matching regex "
-				<< prop_pattern << " in " << prop_directory;
-		frame = -1;
-	}
+	CLOG(LDEBUG) << "Sequence::onSequenceReload";
+	reload_flag = true;
 }
 
-
-bool Sequence::onStep() {
-
-}
 
 bool Sequence::onStart() {
 	return true;
@@ -195,7 +186,7 @@ bool Sequence::findFiles() {
 
 	CLOG(LINFO) << "Sequence loaded.";
 	BOOST_FOREACH(std::string fname, files)
-	CLOG(LINFO) << fname;
+		CLOG(LINFO) << fname;
 
 	return !files.empty();
 }
