@@ -10,7 +10,7 @@
 #include "Component.hpp"
 #include "DataStream.hpp"
 #include "Property.hpp"
-#include "Types/Circles/Circles.hpp"
+#include "Types/Circles.hpp"
 
 #include <opencv2/core/core.hpp>
 using namespace cv;

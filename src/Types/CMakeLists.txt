@@ -14,5 +14,3 @@ install(
     DESTINATION include/Types/Objects3D
     COMPONENT sdk
 )
-
-add_subdirectory(Circles)
